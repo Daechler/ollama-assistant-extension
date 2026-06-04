@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ollama Assistant</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --accent: #e8ff00;
+      --text: #e8e8e8;
+      --muted: #666;
+      --radius: 6px;
+      --font: 'DM Mono', 'Fira Code', 'Courier New', monospace;
+    }
+
+    body {
+      width: 280px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      padding: 16px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #000;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: var(--text);
+    }
+
+    /* ── Sections ── */
+    .section-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    .section { margin-bottom: 16px; }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 11px;
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      text-align: left;
+      line-height: 1.3;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+      background: #1f1f1f;
+    }
+
+    button.full {
+      grid-column: 1 / -1;
+    }
+
+    button.accent {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Settings form ── */
+    #settings-panel {
+      display: none;
+    }
+
+    #settings-panel.open { display: block; }
+
+    .field { margin-bottom: 10px; }
+
+    label {
+      display: block;
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 11px;
+      padding: 6px 8px;
+      border-radius: var(--radius);
+      outline: none;
+    }
+
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+
+    .save-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      font-weight: 700;
+      padding: 8px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+
+    .save-btn:hover { background: #d4e800; }
+
+    .saved-msg {
+      font-size: 10px;
+      color: var(--accent);
+      text-align: center;
+      margin-top: 6px;
+      min-height: 14px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 12px 0;
+    }
+
+    .toggle-settings {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 10px;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      letter-spacing: 0.05em;
+    }
+
+    .toggle-settings:hover { color: var(--text); border: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">○</div>
+    <h1>Ollama Assistant</h1>
+  </header>
+
+  <!-- Quick actions -->
+  <div class="section">
+    <div class="section-label">Page actions</div>
+    <div class="btn-row">
+      <button id="btn-summarize-page">Summarize page</button>
+      <button id="btn-ask-page">Ask about page…</button>
+      <button id="btn-open-chat" class="full accent">Open chat</button>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Settings toggle -->
+  <button class="toggle-settings" id="toggle-settings">⚙ Server settings</button>
+
+  <div id="settings-panel">
+    <hr class="divider" />
+    <div class="section-label" style="margin-top:4px">Configuration</div>
+
+    <div class="field">
+      <label>Ollama server URL</label>
+      <input id="server-url" type="text" placeholder="http://localhost:11434" />
+    </div>
+    <div class="field">
+      <label>API token (optional)</label>
+      <input id="api-token" type="password" placeholder="sk-…" />
+    </div>
+    <div class="field">
+      <label>Model</label>
+      <input id="model" type="text" placeholder="llama3" />
+    </div>
+    <button class="save-btn" id="save-settings">Save</button>
+    <div class="saved-msg" id="saved-msg"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
